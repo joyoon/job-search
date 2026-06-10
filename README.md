@@ -1,22 +1,18 @@
 # job-search
 
-Scrapes job postings from Indeed, LinkedIn, ZipRecruiter, Glassdoor, and other
-sites using [JobSpy](https://github.com/speedyapply/JobSpy). The CLI is
-written in Node/TypeScript and delegates the actual scraping to JobSpy (a
-Python library) via a small subprocess wrapper.
+Scrapes job postings from Indeed, LinkedIn, ZipRecruiter, Glassdoor, Google,
+Bayt, Naukri, and BDJobs using [jobspy-js](https://github.com/borgius/jobspy-js),
+a TypeScript port of [JobSpy](https://github.com/speedyapply/JobSpy).
 
 ## Project structure
 
 ```
 job-search/
-├── python/
-│   ├── requirements.txt   # python-jobspy dependency
-│   └── scrape.py          # JobSpy wrapper, JSON in (stdin) -> JSON out (stdout)
 ├── src/
 │   ├── config/            # env-driven configuration
-│   ├── scrapers/           # subprocess wrapper around scrape.py
+│   ├── scrapers/           # wrapper around jobspy-js
 │   ├── storage/            # writes results to disk
-│   ├── types/              # shared TypeScript types
+│   ├── types/              # re-exported jobspy-js types
 │   └── index.ts            # CLI entry point
 ├── data/                    # scraped output (gitignored)
 ├── package.json
@@ -25,23 +21,11 @@ job-search/
 
 ## Setup
 
-1. Install Node dependencies:
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
-
-2. Set up the Python environment for JobSpy:
-
-   ```bash
-   python3 -m venv python/.venv
-   source python/.venv/bin/activate
-   pip install -r python/requirements.txt
-   ```
-
-3. Copy `.env.example` to `.env` and adjust as needed (in particular
-   `PYTHON_BIN` should point at the Python interpreter with `python-jobspy`
-   installed, e.g. `python/.venv/bin/python`).
+Copy `.env.example` to `.env` and adjust as needed.
 
 ## Usage
 
@@ -57,12 +41,12 @@ Results are saved as JSON under `data/`.
 | --- | --- |
 | `-s, --search-term` | Search term (required) |
 | `-l, --location` | Location to search in |
-| `--sites` | Comma-separated list of sites (`indeed,linkedin,zip_recruiter,glassdoor,...`) |
+| `--sites` | Comma-separated list of sites (`indeed,linkedin,zip_recruiter,glassdoor,google,google_careers,bayt,naukri,bdjobs`) |
 | `-n, --results-wanted` | Number of results per site |
 | `--remote` | Only return remote jobs |
-| `--job-type` | `fulltime`, `parttime`, `internship`, or `contract` |
+| `--job-type` | `fulltime`, `parttime`, `internship`, `contract`, etc. |
 | `--hours-old` | Only return jobs posted within this many hours |
-| `--country` | Country to use for Indeed search |
+| `--country` | Country to use for Indeed/Glassdoor search |
 | `-o, --out` | Output filename within the output directory |
 
 ## Build

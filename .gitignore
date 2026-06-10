@@ -5,8 +5,3 @@ data/*.csv
 !data/.gitkeep
 .env
 *.log
-
-# Python
-python/__pycache__/
-python/.venv/
-*.pyc
