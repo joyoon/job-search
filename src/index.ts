@@ -1,6 +1,10 @@
 import { Command } from "commander";
+import { loadProfile } from "./applicant/profile.js";
 import { config } from "./config/index.js";
+import { createCoverLetterGenerator } from "./drafts/coverLetterGenerator.js";
+import { filterJobs, type FilterCriteria } from "./filters/jobFilter.js";
 import { scrapeJobs } from "./scrapers/jobspy.js";
+import { saveDraft } from "./storage/draftStore.js";
 import { saveJobsAsJson } from "./storage/jobStore.js";
 import { Site, type ScrapeJobsParams } from "./types/job.js";
 
@@ -8,7 +12,7 @@ const program = new Command();
 
 program
   .name("job-search")
-  .description("Scrape job postings from multiple job sites using JobSpy")
+  .description("Scrape job postings, filter them, and draft tailored cover letters")
   .requiredOption("-s, --search-term <term>", "Search term, e.g. 'software engineer'")
   .option("-l, --location <location>", "Location to search in")
   .option(
@@ -22,7 +26,25 @@ program
   .option("--job-type <type>", "Filter by job type (fulltime, parttime, internship, contract, ...)")
   .option("--hours-old <hours>", "Only return jobs posted within this many hours", (v) => Number(v))
   .option("--country <country>", "Country to use for Indeed/Glassdoor search", config.defaultCountry)
-  .option("-o, --out <filename>", "Output filename (saved under the configured output directory)");
+  .option("-o, --out <filename>", "Output filename (saved under the configured output directory)")
+  .option(
+    "--include-keywords <keywords>",
+    "Comma-separated keywords; only keep jobs whose title/description contain at least one",
+    (value) => value.split(",").map((s) => s.trim()),
+    config.defaultIncludeKeywords,
+  )
+  .option(
+    "--exclude-keywords <keywords>",
+    "Comma-separated keywords; drop jobs whose title/description contain any of these",
+    (value) => value.split(",").map((s) => s.trim()),
+    config.defaultExcludeKeywords,
+  )
+  .option("--min-salary <amount>", "Drop jobs with a known max salary below this amount", (v) => Number(v), config.defaultMinSalary)
+  .option(
+    "--generate-drafts",
+    "Generate a tailored cover letter draft for each remaining job (requires ANTHROPIC_API_KEY)",
+  )
+  .option("--profile <path>", "Path to a text/markdown file describing your background", config.profilePath);
 
 program.parse();
 
@@ -39,15 +61,40 @@ const scrapeParams: ScrapeJobsParams = {
   country_indeed: opts.country,
 };
 
+const filterCriteria: FilterCriteria = {
+  includeKeywords: opts.includeKeywords,
+  excludeKeywords: opts.excludeKeywords,
+  remoteOnly: opts.remote ?? undefined,
+  minSalary: opts.minSalary,
+};
+
 console.log(`Scraping jobs for "${scrapeParams.search_term}"...`);
 
 try {
   const { jobs } = await scrapeJobs(scrapeParams);
   console.log(`Found ${jobs.length} job(s).`);
 
-  const filePath = await saveJobsAsJson(jobs, opts.out);
+  const filtered = filterJobs(jobs, filterCriteria);
+  console.log(`${filtered.length} job(s) match your filters.`);
+
+  const filePath = await saveJobsAsJson(filtered, opts.out);
   console.log(`Saved results to ${filePath}`);
+
+  if (opts.generateDrafts) {
+    if (!config.anthropicApiKey) {
+      throw new Error("ANTHROPIC_API_KEY must be set to generate cover letter drafts.");
+    }
+
+    const profile = await loadProfile(opts.profile);
+    const generator = createCoverLetterGenerator(config.anthropicApiKey);
+
+    for (const job of filtered) {
+      const coverLetter = await generator.generate(job, profile);
+      const draftPath = await saveDraft(config.draftsDir, job, coverLetter);
+      console.log(`Drafted cover letter: ${draftPath}`);
+    }
+  }
 } catch (err) {
-  console.error("Scrape failed:", (err as Error).message);
+  console.error("Pipeline failed:", (err as Error).message);
   process.exitCode = 1;
 }

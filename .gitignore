@@ -2,6 +2,10 @@ node_modules/
 dist/
 data/*.json
 data/*.csv
+data/drafts/
 !data/.gitkeep
 .env
 *.log
+
+# Personal profile/resume content
+profile/resume.md
