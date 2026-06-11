@@ -49,6 +49,16 @@ npm run dev -- --search-term "software engineer" --location "San Francisco, CA" 
 
 Filtered results are saved as JSON under `data/`.
 
+### Processing an existing JSON export
+
+If you already have a JSON array of job listings (e.g. from a previous
+scrape), use `--input` to skip scraping and run it straight through the
+filter/draft steps:
+
+```bash
+npm run dev -- --input ./data/jobs-2026-06-10.json --include-keywords "engineer" --remote --generate-drafts
+```
+
 ### Filtering and drafting
 
 ```bash
@@ -69,7 +79,8 @@ per matching job, for you to review and edit before applying.
 
 | Flag | Description |
 | --- | --- |
-| `-s, --search-term` | Search term (required) |
+| `-s, --search-term` | Search term (required unless `--input` is set) |
+| `--input` | Path to a JSON file of job listings to process instead of scraping |
 | `-l, --location` | Location to search in |
 | `--sites` | Comma-separated list of sites (`indeed,linkedin,zip_recruiter,glassdoor,google,google_careers,bayt,naukri,bdjobs`) |
 | `-n, --results-wanted` | Number of results per site |

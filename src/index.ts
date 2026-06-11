@@ -3,17 +3,19 @@ import { loadProfile } from "./applicant/profile.js";
 import { config } from "./config/index.js";
 import { createCoverLetterGenerator } from "./drafts/coverLetterGenerator.js";
 import { filterJobs, type FilterCriteria } from "./filters/jobFilter.js";
+import { loadJobsFromFile } from "./io/loadJobs.js";
 import { scrapeJobs } from "./scrapers/jobspy.js";
 import { saveDraft } from "./storage/draftStore.js";
 import { saveJobsAsJson } from "./storage/jobStore.js";
-import { Site, type ScrapeJobsParams } from "./types/job.js";
+import { Site, type JobPost, type ScrapeJobsParams } from "./types/job.js";
 
 const program = new Command();
 
 program
   .name("job-search")
-  .description("Scrape job postings, filter them, and draft tailored cover letters")
-  .requiredOption("-s, --search-term <term>", "Search term, e.g. 'software engineer'")
+  .description("Scrape (or load) job postings, filter them, and draft tailored cover letters")
+  .option("-s, --search-term <term>", "Search term, e.g. 'software engineer' (ignored if --input is set)")
+  .option("--input <file>", "Load job listings from an existing JSON file instead of scraping")
   .option("-l, --location <location>", "Location to search in")
   .option(
     "--sites <sites>",
@@ -50,16 +52,10 @@ program.parse();
 
 const opts = program.opts();
 
-const scrapeParams: ScrapeJobsParams = {
-  search_term: opts.searchTerm,
-  location: opts.location,
-  site_name: opts.sites,
-  results_wanted: opts.resultsWanted,
-  is_remote: opts.remote ?? undefined,
-  job_type: opts.jobType,
-  hours_old: opts.hoursOld,
-  country_indeed: opts.country,
-};
+if (!opts.input && !opts.searchTerm) {
+  console.error("Pipeline failed: either --search-term or --input must be provided.");
+  process.exit(1);
+}
 
 const filterCriteria: FilterCriteria = {
   includeKeywords: opts.includeKeywords,
@@ -68,10 +64,28 @@ const filterCriteria: FilterCriteria = {
   minSalary: opts.minSalary,
 };
 
-console.log(`Scraping jobs for "${scrapeParams.search_term}"...`);
-
 try {
-  const { jobs } = await scrapeJobs(scrapeParams);
+  let jobs: JobPost[];
+
+  if (opts.input) {
+    console.log(`Loading jobs from ${opts.input}...`);
+    jobs = await loadJobsFromFile(opts.input);
+  } else {
+    const scrapeParams: ScrapeJobsParams = {
+      search_term: opts.searchTerm,
+      location: opts.location,
+      site_name: opts.sites,
+      results_wanted: opts.resultsWanted,
+      is_remote: opts.remote ?? undefined,
+      job_type: opts.jobType,
+      hours_old: opts.hoursOld,
+      country_indeed: opts.country,
+    };
+
+    console.log(`Scraping jobs for "${scrapeParams.search_term}"...`);
+    ({ jobs } = await scrapeJobs(scrapeParams));
+  }
+
   console.log(`Found ${jobs.length} job(s).`);
 
   const filtered = filterJobs(jobs, filterCriteria);

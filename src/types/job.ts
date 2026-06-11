@@ -1,4 +1,5 @@
 export type {
+  CompensationInterval,
   JobPost,
   JobResponse,
   ScrapeJobsParams,
