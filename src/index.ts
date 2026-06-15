@@ -5,6 +5,7 @@ import { createCoverLetterGenerator } from "./drafts/coverLetterGenerator.js";
 import { filterJobs, type FilterCriteria } from "./filters/jobFilter.js";
 import { loadJobsFromFile } from "./io/loadJobs.js";
 import { scrapeJobs } from "./scrapers/jobspy.js";
+import { createJobScorer, scoreJobs } from "./scoring/jobScorer.js";
 import { saveDraft } from "./storage/draftStore.js";
 import { saveJobsAsJson } from "./storage/jobStore.js";
 import { Site, type JobPost, type ScrapeJobsParams } from "./types/job.js";
@@ -46,6 +47,11 @@ program
     "--generate-drafts",
     "Generate a tailored cover letter draft for each remaining job (requires ANTHROPIC_API_KEY)",
   )
+  .option(
+    "--score",
+    "Score each remaining job against your profile and sort by match (requires ANTHROPIC_API_KEY)",
+  )
+  .option("--top-n <number>", "Keep only the top N scored jobs", (v) => Number(v))
   .option("--profile <path>", "Path to a text/markdown file describing your background", config.profilePath);
 
 program.parse();
@@ -88,8 +94,27 @@ try {
 
   console.log(`Found ${jobs.length} job(s).`);
 
-  const filtered = filterJobs(jobs, filterCriteria);
+  let filtered: JobPost[] = filterJobs(jobs, filterCriteria);
   console.log(`${filtered.length} job(s) match your filters.`);
+
+  if (opts.score) {
+    if (!config.anthropicApiKey) {
+      throw new Error("ANTHROPIC_API_KEY must be set to score jobs.");
+    }
+
+    const profile = await loadProfile(opts.profile);
+    const scorer = createJobScorer(config.anthropicApiKey);
+
+    console.log(`Scoring ${filtered.length} job(s) against your profile...`);
+    let scored = await scoreJobs(filtered, profile, scorer);
+
+    if (opts.topN !== undefined) {
+      scored = scored.slice(0, opts.topN);
+    }
+
+    filtered = scored;
+    console.log(`Kept ${filtered.length} job(s) after scoring.`);
+  }
 
   const filePath = await saveJobsAsJson(filtered, opts.out);
   console.log(`Saved results to ${filePath}`);
