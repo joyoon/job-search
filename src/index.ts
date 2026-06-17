@@ -12,6 +12,8 @@ import { Site, type JobPost, type ScrapeJobsParams } from "./types/job.js";
 
 const program = new Command();
 
+console.log("starting...");
+
 program
   .name("job-search")
   .description("Scrape (or load) job postings, filter them, and draft tailored cover letters")

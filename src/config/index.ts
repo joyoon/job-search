@@ -20,7 +20,7 @@ export const config = {
   defaultSites: parseSites(process.env.DEFAULT_SITES),
   defaultResultsWanted: Number(process.env.DEFAULT_RESULTS_WANTED ?? 20),
   defaultCountry: process.env.DEFAULT_COUNTRY ?? "USA",
-  outputDir: process.env.OUTPUT_DIR ?? "./data",
+  outputDir: process.env.OUTPUT_DIR ?? "./data/filtered",
   draftsDir: process.env.DRAFTS_DIR ?? "./data/drafts",
   profilePath: process.env.PROFILE_PATH ?? "./profile/resume.md",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,

@@ -5,6 +5,7 @@ data/*.csv
 data/drafts/
 !data/.gitkeep
 .env
+.env.example
 *.log
 
 # Personal profile/resume content
