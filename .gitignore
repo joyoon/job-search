@@ -6,7 +6,6 @@ data/drafts/
 !data/.gitkeep
 .env
 .env.example
-package-lock.json
 *.log
 
 # Personal profile/resume content
