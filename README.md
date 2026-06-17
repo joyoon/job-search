@@ -22,7 +22,9 @@ job-search/
 │   ├── scrapers/           # wrapper around jobspy-js
 │   ├── storage/            # writes job results and drafts to disk
 │   ├── types/              # re-exported jobspy-js types
-│   └── index.ts            # CLI entry point
+│   ├── index.ts            # CLI entry point
+│   └── server.ts           # Express server backing the web UI
+├── public/                 # static web UI (form + results) served by server.ts
 ├── profile/
 │   └── resume.example.md   # template; copy to resume.md and fill in
 ├── data/                    # scraped output and drafts (gitignored)
@@ -40,6 +42,17 @@ cp profile/resume.example.md profile/resume.md
 
 Fill in `profile/resume.md` with your background, and adjust `.env` as
 needed. Set `ANTHROPIC_API_KEY` if you want to use `--generate-drafts`.
+
+## Web UI
+
+Run a local server with a form to search and browse job listings in the browser:
+
+```bash
+npm run serve
+```
+
+Then open http://localhost:3000. Results are fetched live from `/api/jobs`,
+which wraps the same `scrapeJobs`/`filterJobs` pipeline as the CLI.
 
 ## Usage
 

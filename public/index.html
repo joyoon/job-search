@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Search</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Job Search</h1>
+    <p class="subtitle">Search live listings via JobSpy</p>
+  </header>
+
+  <form id="search-form">
+    <div class="field">
+      <label for="search_term">Search term *</label>
+      <input id="search_term" name="search_term" type="text" placeholder="software engineer" required />
+    </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <input id="location" name="location" type="text" placeholder="San Francisco, CA" />
+    </div>
+    <div class="field">
+      <label for="sites">Sites</label>
+      <input id="sites" name="sites" type="text" placeholder="indeed,linkedin,zip_recruiter,glassdoor" />
+    </div>
+    <div class="field">
+      <label for="results_wanted">Results per site</label>
+      <input id="results_wanted" name="results_wanted" type="number" min="1" value="20" />
+    </div>
+    <div class="field checkbox">
+      <label><input id="remote" name="remote" type="checkbox" /> Remote only</label>
+    </div>
+    <div class="field">
+      <label for="min_salary">Min salary</label>
+      <input id="min_salary" name="min_salary" type="number" min="0" placeholder="120000" />
+    </div>
+    <div class="field">
+      <label for="include_keywords">Include keywords</label>
+      <input id="include_keywords" name="include_keywords" type="text" placeholder="typescript,node" />
+    </div>
+    <div class="field">
+      <label for="exclude_keywords">Exclude keywords</label>
+      <input id="exclude_keywords" name="exclude_keywords" type="text" placeholder="senior,staff" />
+    </div>
+    <button type="submit">Search</button>
+  </form>
+
+  <section id="status"></section>
+  <section id="results"></section>
+
+  <script src="app.js"></script>
+</body>
+</html>
